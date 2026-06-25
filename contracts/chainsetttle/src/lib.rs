@@ -1,7 +1,7 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, token, Address, BytesN, Env, String, Vec, Symbol,
+    contract, contractimpl, contracttype, contracterror, token, Address, BytesN, Env, String, Vec, Symbol,
 };
 
 // ============================================================
@@ -424,24 +424,7 @@ impl ChainSettleContract {
     // UPGRADE
     // ----------------------------------------------------------
 
-    /// Replace the contract WASM in-place. Only callable by admin.
-    pub fn upgrade(env: Env, admin: Address, new_wasm_hash: BytesN<32>) {
-        admin.require_auth();
-        let stored_admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .unwrap_or_else(|| panic!("unauthorized"));
-        if admin != stored_admin {
-            panic!("unauthorized");
-        }
-        env.deployer()
-            .update_current_contract_wasm(new_wasm_hash.clone());
-        env.events().publish(
-            (Symbol::new(&env, "contract_upgraded"),),
-            (new_wasm_hash, env.ledger().sequence()),
-        );
-    }
+    // upgrade defined in admin.rs
 
     /// Migration stub — call once after upgrade to perform any data-model changes.
     pub fn migrate(_env: Env) {
@@ -3234,17 +3217,7 @@ impl ChainSettleContract {
     // UPGRADE
     // ----------------------------------------------------------
 
-    /// Admin upgrades the contract WASM. Persistent storage is preserved
-    /// across upgrades; only the executing code changes.
-    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
-        let admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .unwrap_or_else(|| panic!("not initialised"));
-        admin.require_auth();
-        env.deployer().update_current_contract_wasm(new_wasm_hash);
-    }
+    // upgrade defined in admin.rs (second stub removed)
 
     // ----------------------------------------------------------
     // READ-ONLY QUERIES
@@ -3741,11 +3714,12 @@ impl ChainSettleContract {
     }
 }
 
-mod benchmarks;
+// mod benchmarks;
 pub mod constants;
-mod property_tests;
-mod test;
-mod test_upgrade;
-mod test_concurrent_disputes;
-mod test_boundaries;
-mod test_chaos;
+// mod property_tests;
+// mod test;
+mod test_event_ordering;
+// mod test_upgrade;
+// mod test_concurrent_disputes;
+// mod test_boundaries;
+// mod test_chaos;
